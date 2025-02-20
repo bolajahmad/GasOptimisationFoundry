@@ -24,16 +24,12 @@ contract GasTest is Test {
     ];
 
 
-function get_random_address(uint256 offset) internal returns (address) {
-    uint time_now = vm.unixTime();
-    return (vm.addr(time_now + offset));
-}
-
+    function get_random_address(uint256 offset) internal returns (address) {
+        uint time_now = vm.unixTime();
+        return (vm.addr(time_now + offset));
+    }
 
     function setUp() public {
-
-    
-
         for (uint8 ii = 0; ii < 4 ; ii++){
             admins[ii]  = get_random_address(ii);
         }
