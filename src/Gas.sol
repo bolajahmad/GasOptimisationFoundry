@@ -7,7 +7,6 @@ contract GasContract is Ownable {
     uint256 public immutable totalSupply; // cannot be updated
     
     mapping(address => uint256) public balances;
-    uint256 public tradePercent = 12;
     address public contractOwner;
     uint256 public tradeMode = 0;
     mapping(address => Payment[]) public payments;
@@ -153,11 +152,8 @@ contract GasContract is Ownable {
         history.lastUpdate = block.timestamp;
         history.updatedBy = _updateAddress;
         paymentHistory.push(history);
-        bool[] memory status = new bool[](tradePercent);
-        for (uint256 i = 0; i < tradePercent; i++) {
-            status[i] = true;
-        }
-        return ((status[0] == true));
+
+        return true;
     }
 
     function getPayments(address _user)
@@ -198,11 +194,8 @@ contract GasContract is Ownable {
         payment.recipientName = _name;
         payment.paymentID += 1;
         payments[senderOfTx].push(payment);
-        bool[] memory status = new bool[](tradePercent);
-        for (uint256 i = 0; i < tradePercent; i++) {
-            status[i] = true;
-        }
-        return (status[0] == true);
+
+        return true;
     }
 
     function updatePayment(
