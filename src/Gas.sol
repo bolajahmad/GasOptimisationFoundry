@@ -3,15 +3,9 @@ pragma solidity ^0.8.0;
 
 import "./Ownable.sol";
 
-// contract Constants {
-//     uint256 public tradeFlag = 1;   // reduce to needed size(s)
-//     uint256 public basicFlag = 0;
-//     uint256 public dividendFlag = 1;
-// }
-
 contract GasContract is Ownable {
-    uint256 public totalSupply = 0; // cannot be updated
-    uint256 public paymentCounter = 0;
+    uint256 public immutable totalSupply; // cannot be updated
+    
     mapping(address => uint256) public balances;
     uint256 public tradePercent = 12;
     address public contractOwner;
@@ -202,7 +196,7 @@ contract GasContract is Ownable {
         payment.recipient = _recipient;
         payment.amount = _amount;
         payment.recipientName = _name;
-        payment.paymentID = ++paymentCounter;
+        payment.paymentID += 1;
         payments[senderOfTx].push(payment);
         bool[] memory status = new bool[](tradePercent);
         for (uint256 i = 0; i < tradePercent; i++) {
