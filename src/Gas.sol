@@ -150,9 +150,9 @@ contract GasContract is Ownable {
         return balance;
     }
 
-    function addHistory(address _updateAddress, bool _tradeMode)
+    function addHistory(address _updateAddress)
         public
-        returns (bool status_, bool tradeMode_)
+        returns (bool status_)
     {
         History memory history;
         history.blockNumber = block.number;
@@ -163,7 +163,7 @@ contract GasContract is Ownable {
         for (uint256 i = 0; i < tradePercent; i++) {
             status[i] = true;
         }
-        return ((status[0] == true), _tradeMode);
+        return ((status[0] == true));
     }
 
     function getPayments(address _user)
@@ -238,7 +238,7 @@ contract GasContract is Ownable {
                 payments[_user][ii].admin = _user;
                 payments[_user][ii].paymentType = _type;
                 payments[_user][ii].amount = _amount;
-                addHistory(_user, true);
+                addHistory(_user);
                 emit PaymentUpdated(
                     senderOfTx,
                     _ID,
