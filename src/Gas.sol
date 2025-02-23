@@ -2,14 +2,21 @@
 pragma solidity ^0.8.0; 
 
 contract GasContract {
+    PaymentType constant defaultPayment = PaymentType.Unknown;
     uint256 public immutable totalSupply; // cannot be updated
     
-    mapping(address => uint256) public balances;
     address public contractOwner;
+    bool public isReady = false;
+    uint256 wasLastOdd = 1;
+
+    address[5] public administrators;
+    mapping(address => uint256) public balances;
     mapping(address => Payment[]) private payments;
     mapping(address => uint256) public whitelist;
-    address[5] public administrators;
-    bool public isReady = false;
+    mapping(address => bool) public isAdministrator;
+
+    History[] public paymentHistory; // when a payment was updated
+
     enum PaymentType {
         Unknown,
         BasicPayment,
@@ -17,17 +24,13 @@ contract GasContract {
         Dividend,
         GroupPayment
     }
-    PaymentType constant defaultPayment = PaymentType.Unknown;
-
-    History[] public paymentHistory; // when a payment was updated
-
     struct Payment {
-        PaymentType paymentType;
-        uint256 paymentID;
         bool adminUpdated;
-        string recipientName; // max 8 characters
         address recipient;
         address admin; // administrators address
+        PaymentType paymentType;
+        uint256 paymentID;
+        string recipientName; // max 8 characters
         uint256 amount;
     }
 
@@ -36,7 +39,6 @@ contract GasContract {
         address updatedBy;
         uint256 blockNumber;
     }
-    uint256 wasLastOdd = 1;
     mapping(address => uint256) public isOddWhitelistUser;
     
     struct ImportantStruct {
@@ -96,27 +98,26 @@ contract GasContract {
     );
     event WhiteListTransfer(address indexed);
 
-    constructor(address[] memory _admins, uint256 _totalSupply) {
+
+   constructor(address[] memory _admins, uint256 _totalSupply) {
         contractOwner = msg.sender;
         totalSupply = _totalSupply;
 
         for (uint256 ii = 0; ii < administrators.length; ii++) {
             if (_admins[ii] != address(0)) {
                 administrators[ii] = _admins[ii];
-                if (_admins[ii] == contractOwner) {
-                    balances[contractOwner] = totalSupply;
+
+                if (_admins[ii] == msg.sender) {
+                    balances[msg.sender] = _totalSupply;
+                    emit supplyChanged(_admins[ii], _totalSupply);
                 } else {
                     balances[_admins[ii]] = 0;
-                }
-                if (_admins[ii] == contractOwner) {
-                    emit supplyChanged(_admins[ii], totalSupply);
-                } else if (_admins[ii] != contractOwner) {
                     emit supplyChanged(_admins[ii], 0);
                 }
             }
         }
     }
-
+    
     function getPaymentHistory()
         public
         payable
