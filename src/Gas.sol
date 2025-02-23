@@ -1,11 +1,23 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0; 
 
+error InvalidTier();
+error InvalidAddress();
+error InvalidAmount();
+error NameTooLong();
+error InvalidID();
+error InsufficientBalance();
+error UnauthorizedCaller();
+error InvalidWhitelistTier();
+error NotWhitelisted();
+error ContractHacked();
+    
+
 contract GasContract {
     uint256 public immutable totalSupply; // cannot be updated
     
     mapping(address => uint256) public balances;
-    mapping(address => Payment[]) private payments;
+    mapping(address => Payment[]) public payments;
     mapping(address => uint256) public whitelist;
     address[5] public administrators;
     mapping(address => bool) public isAdministrator;
@@ -98,6 +110,7 @@ contract GasContract {
     event WhiteListTransfer(address indexed);
 
 
+
    constructor(address[] memory _admins, uint256 _totalSupply) {
         contractOwner = msg.sender;
         totalSupply = _totalSupply;
@@ -140,7 +153,7 @@ contract GasContract {
 
     function addHistory(address _updateAddress)
         public
-        returns (bool status_)
+        returns (bool)
     {
         History memory history;
         history.blockNumber = block.number;
@@ -151,33 +164,18 @@ contract GasContract {
         return true;
     }
 
-    function getPayments(address _user)
-        public
-        view
-        returns (Payment[] memory payments_)
-    {
-        require(
-            _user != address(0),
-            "Gas Contract - getPayments function - User must have a valid non zero address"
-        );
-        return payments[_user];
-    }
-
     function transfer(
         address _recipient,
         uint256 _amount,
         string calldata _name
-    ) public returns (bool status_) {
-        address senderOfTx = msg.sender;
-        require(
-            balances[senderOfTx] >= _amount,
-            "Gas Contract - Transfer function - Sender has insufficient Balance"
-        );
-        require(
-            bytes(_name).length < 9,
-            "Gas Contract - Transfer function -  The recipient name is too long, there is a max length of 8 characters"
-        );
-        balances[senderOfTx] -= _amount;
+    ) public returns (bool) {
+        if (balances[msg.sender] < _amount) {
+            revert InsufficientBalance();
+        }
+        if (bytes(_name).length >= 9) {
+            revert NameTooLong();
+        }
+        balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
         emit Transfer(_recipient, _amount);
         Payment memory payment;
@@ -188,7 +186,7 @@ contract GasContract {
         payment.amount = _amount;
         payment.recipientName = _name;
         payment.paymentID += 1;
-        payments[senderOfTx].push(payment);
+        payments[msg.sender].push(payment);
 
         return true;
     }
@@ -199,20 +197,15 @@ contract GasContract {
         uint256 _amount,
         PaymentType _type
     ) public onlyAdminOrOwner {
-        require(
-            _ID > 0,
-            "Gas Contract - Update Payment function - ID must be greater than 0"
-        );
-        require(
-            _amount > 0,
-            "Gas Contract - Update Payment function - Amount must be greater than 0"
-        );
-        require(
-            _user != address(0),
-            "Gas Contract - Update Payment function - Administrator must have a valid non zero address"
-        );
-
-        address senderOfTx = msg.sender;
+        if (_ID <= 0) {
+            revert InvalidID();
+        }
+        if (_amount <= 0) {
+            revert InvalidAmount();
+        }
+        if (_user == address(0)) {
+            revert InvalidAddress();
+        }
 
         for (uint256 ii = 0; ii < payments[_user].length; ii++) {
             if (payments[_user][ii].paymentID == _ID) {
@@ -222,7 +215,7 @@ contract GasContract {
                 payments[_user][ii].amount = _amount;
                 addHistory(_user);
                 emit PaymentUpdated(
-                    senderOfTx,
+                    msg.sender,
                     _ID,
                     _amount,
                     payments[_user][ii].recipientName
@@ -235,10 +228,10 @@ contract GasContract {
         public
         onlyAdminOrOwner
     {
-        require(
-            _tier < 255,
-            "Gas Contract - addToWhitelist function -  tier level should not be greater than 255"
-        );
+        if (_tier >= 255) {
+            revert InvalidTier();
+        }
+        
         whitelist[_userAddrs] = _tier;
         if (_tier > 3) {
             whitelist[_userAddrs] -= _tier;
@@ -259,7 +252,7 @@ contract GasContract {
             wasLastOdd = 1;
             isOddWhitelistUser[_userAddrs] = wasLastAddedOdd;
         } else {
-            revert("Contract hacked, imposible, call help");
+            revert ContractHacked();
         }
         emit AddedToWhitelist(_userAddrs, _tier);
     }
@@ -271,18 +264,17 @@ contract GasContract {
         address senderOfTx = msg.sender;
         whiteListStruct[senderOfTx] = ImportantStruct(_amount, 0, 0, 0, true, msg.sender);
         
-        require(
-            balances[senderOfTx] >= _amount,
-            "Gas Contract - whiteTransfers function - Sender has insufficient Balance"
-        );
-        require(
-            _amount > 3,
-            "Gas Contract - whiteTransfers function - amount to send have to be bigger than 3"
-        );
-        balances[senderOfTx] -= _amount;
+        if (balances[senderOfTx] < _amount) {
+            revert InsufficientBalance();
+        }
+        if (_amount <= 3) {
+            revert InvalidAmount();
+        }
+        
+        balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
-        balances[senderOfTx] += whitelist[senderOfTx];
-        balances[_recipient] -= whitelist[senderOfTx];
+        balances[msg.sender] += whitelist[msg.sender];
+        balances[_recipient] -= whitelist[msg.sender];
         
         emit WhiteListTransfer(_recipient);
     }
