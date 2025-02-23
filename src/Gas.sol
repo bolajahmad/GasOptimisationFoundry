@@ -2,21 +2,16 @@
 pragma solidity ^0.8.0; 
 
 contract GasContract {
-    PaymentType constant defaultPayment = PaymentType.Unknown;
     uint256 public immutable totalSupply; // cannot be updated
     
-    address public contractOwner;
-    bool public isReady = false;
-    uint256 wasLastOdd = 1;
-
-    address[5] public administrators;
     mapping(address => uint256) public balances;
     mapping(address => Payment[]) private payments;
     mapping(address => uint256) public whitelist;
+    address[5] public administrators;
     mapping(address => bool) public isAdministrator;
-
-    History[] public paymentHistory; // when a payment was updated
-
+    bool public isReady = false;
+    uint8 wasLastOdd = 1;
+    address public contractOwner;
     enum PaymentType {
         Unknown,
         BasicPayment,
@@ -24,13 +19,17 @@ contract GasContract {
         Dividend,
         GroupPayment
     }
+    PaymentType constant defaultPayment = PaymentType.Unknown;
+
+    History[] public paymentHistory; // when a payment was updated
+
     struct Payment {
-        bool adminUpdated;
-        address recipient;
-        address admin; // administrators address
         PaymentType paymentType;
         uint256 paymentID;
+        bool adminUpdated;
         string recipientName; // max 8 characters
+        address recipient;
+        address admin; // administrators address
         uint256 amount;
     }
 
@@ -253,7 +252,8 @@ contract GasContract {
             whitelist[_userAddrs] -= _tier;
             whitelist[_userAddrs] = 2;
         }
-        uint256 wasLastAddedOdd = wasLastOdd;
+        
+        uint8 wasLastAddedOdd = wasLastOdd;
         if (wasLastAddedOdd == 1) {
             wasLastOdd = 0;
             isOddWhitelistUser[_userAddrs] = wasLastAddedOdd;
