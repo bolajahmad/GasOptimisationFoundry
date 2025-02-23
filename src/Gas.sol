@@ -126,18 +126,16 @@ contract GasContract {
     }
 
     function checkForAdmin(address _user) public view returns (bool admin_) {
-        bool admin = false;
         for (uint256 ii = 0; ii < administrators.length; ii++) {
             if (administrators[ii] == _user) {
-                admin = true;
+                admin_ = true;
             }
         }
-        return admin;
+        return admin_;
     }
 
-    function balanceOf(address _user) public view returns (uint256 balance_) {
-        uint256 balance = balances[_user];
-        return balance;
+    function balanceOf(address _user) public view returns (uint256) {
+        return balances[_user];
     }
 
     function addHistory(address _updateAddress)
