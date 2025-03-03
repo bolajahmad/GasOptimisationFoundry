@@ -189,6 +189,6 @@ contract GasContract {
     }
 
     fallback() external payable {
-        payable(msg.sender).transfer(msg.value);
+        require(false);
     }
 }
