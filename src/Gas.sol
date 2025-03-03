@@ -1,19 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0; 
 
-error InvalidTier();
-error InvalidAddress();
-error InvalidAmount();
-error NameTooLong();
-error InvalidID();
-error InsufficientBalance();
-error UnauthorizedCaller();
-error MustBeOwnerOrAdmin();
-error InvalidWhitelistTier();
-error NotWhitelisted();
-error ContractHacked();
-    
-
 contract GasContract {
     uint256 public immutable totalSupply; // cannot be updated
     
@@ -45,7 +32,7 @@ contract GasContract {
 
     modifier onlyAdminOrOwner() {
         if (!checkForAdmin(msg.sender) && msg.sender != contractOwner) {
-            revert MustBeOwnerOrAdmin();
+            revert();
             _;
         } else {
             _;
@@ -55,19 +42,17 @@ contract GasContract {
     modifier checkIfWhiteListed(address sender) {
         address senderOfTx = msg.sender;
         if (msg.sender != sender) {
-            revert NotWhitelisted();
+            revert();
             _;
         }
         uint256 usersTier = whitelist[msg.sender];
         if (usersTier < 1 || usersTier > 4) {
-            revert NotWhitelisted();
+            revert();
             _;
         }
         _;
     }
 
-    event supplyChanged(address indexed, uint256 indexed);
-    event Transfer(address recipient, uint256 amount);
     event PaymentUpdated(
         address admin,
         uint256 ID,
@@ -86,7 +71,6 @@ contract GasContract {
             }
         }
         balances[msg.sender] = _totalSupply;
-        emit supplyChanged(msg.sender, _totalSupply);
     }
     
     function checkForAdmin(address _user) public view returns (bool admin_) {
@@ -121,14 +105,13 @@ contract GasContract {
         string calldata _name
     ) public returns (bool) {
         if (balances[msg.sender] < _amount) {
-            revert InsufficientBalance();
+            revert();
         }
         if (bytes(_name).length >= 9) {
-            revert NameTooLong();
+            revert();
         }
         balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
-        emit Transfer(_recipient, _amount);
 
         return true;
     }
@@ -138,7 +121,7 @@ contract GasContract {
         onlyAdminOrOwner
     {
         if (_tier >= 255) {
-            revert InvalidTier();
+            revert();
         }
         
         whitelist[_userAddrs] = _tier;
@@ -158,7 +141,7 @@ contract GasContract {
             wasLastOdd = 1;
             isOddWhitelistUser[_userAddrs] = wasLastAddedOdd;
         } else {
-            revert ContractHacked();
+            revert();
         }
         emit AddedToWhitelist(_userAddrs, _tier);
     }
@@ -170,10 +153,10 @@ contract GasContract {
         whiteListStruct[msg.sender] = ImportantStruct(_amount, true, msg.sender);
         
         if (balances[msg.sender] < _amount) {
-            revert InsufficientBalance();
+            revert();
         }
         if (_amount <= 3) {
-            revert InvalidAmount();
+            revert();
         }
         
         balances[msg.sender] -= _amount;
