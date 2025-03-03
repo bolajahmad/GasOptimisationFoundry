@@ -18,33 +18,14 @@ contract GasContract {
     uint256 public immutable totalSupply; // cannot be updated
     
     mapping(address => uint256) public balances;
-    mapping(address => Payment[]) public payments;
     mapping(address => uint256) public whitelist;
     address[5] public administrators;
     mapping(address => bool) public isAdministrator;
     bool public isReady = false;
     uint8 wasLastOdd = 1;
     address public contractOwner;
-    enum PaymentType {
-        Unknown,
-        BasicPayment,
-        Refund,
-        Dividend,
-        GroupPayment
-    }
-    PaymentType constant defaultPayment = PaymentType.Unknown;
 
     History[] public paymentHistory; // when a payment was updated
-
-    struct Payment {
-        PaymentType paymentType;
-        uint256 paymentID;
-        bool adminUpdated;
-        string recipientName; // max 8 characters
-        address recipient;
-        address admin; // administrators address
-        uint256 amount;
-    }
 
     struct History {
         uint256 lastUpdate;
@@ -148,50 +129,8 @@ contract GasContract {
         balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
         emit Transfer(_recipient, _amount);
-        Payment memory payment;
-        payment.admin = address(0);
-        payment.adminUpdated = false;
-        payment.paymentType = PaymentType.BasicPayment;
-        payment.recipient = _recipient;
-        payment.amount = _amount;
-        payment.recipientName = _name;
-        payment.paymentID += 1;
-        payments[msg.sender].push(payment);
 
         return true;
-    }
-
-    function updatePayment(
-        address _user,
-        uint256 _ID,
-        uint256 _amount,
-        PaymentType _type
-    ) public onlyAdminOrOwner {
-        if (_ID <= 0) {
-            revert InvalidID();
-        }
-        if (_amount <= 0) {
-            revert InvalidAmount();
-        }
-        if (_user == address(0)) {
-            revert InvalidAddress();
-        }
-
-        for (uint256 ii = 0; ii < payments[_user].length; ii++) {
-            if (payments[_user][ii].paymentID == _ID) {
-                payments[_user][ii].adminUpdated = true;
-                payments[_user][ii].admin = _user;
-                payments[_user][ii].paymentType = _type;
-                payments[_user][ii].amount = _amount;
-                addHistory(_user);
-                emit PaymentUpdated(
-                    msg.sender,
-                    _ID,
-                    _amount,
-                    payments[_user][ii].recipientName
-                );
-            }
-        }
     }
 
     function addToWhitelist(address _userAddrs, uint256 _tier)
