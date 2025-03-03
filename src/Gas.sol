@@ -98,8 +98,6 @@ contract GasContract {
     );
     event WhiteListTransfer(address indexed);
 
-
-
    constructor(address[] memory _admins, uint256 _totalSupply) {
         contractOwner = msg.sender;
         totalSupply = _totalSupply;
@@ -107,26 +105,12 @@ contract GasContract {
         for (uint256 ii = 0; ii < administrators.length; ii++) {
             if (_admins[ii] != address(0)) {
                 administrators[ii] = _admins[ii];
-
-                if (_admins[ii] == msg.sender) {
-                    balances[msg.sender] = _totalSupply;
-                    emit supplyChanged(_admins[ii], _totalSupply);
-                } else {
-                    balances[_admins[ii]] = 0;
-                    emit supplyChanged(_admins[ii], 0);
-                }
             }
         }
+        balances[msg.sender] = _totalSupply;
+        emit supplyChanged(msg.sender, _totalSupply);
     }
     
-    function getPaymentHistory()
-        public
-        payable
-        returns (History[] memory paymentHistory_)
-    {
-        return paymentHistory;
-    }
-
     function checkForAdmin(address _user) public view returns (bool admin_) {
         for (uint256 ii = 0; ii < administrators.length; ii++) {
             if (administrators[ii] == _user) {
@@ -250,10 +234,9 @@ contract GasContract {
         address _recipient,
         uint256 _amount
     ) public checkIfWhiteListed(msg.sender) {
-        address senderOfTx = msg.sender;
-        whiteListStruct[senderOfTx] = ImportantStruct(_amount, 0, 0, 0, true, msg.sender);
+        whiteListStruct[msg.sender] = ImportantStruct(_amount, 0, 0, 0, true, msg.sender);
         
-        if (balances[senderOfTx] < _amount) {
+        if (balances[msg.sender] < _amount) {
             revert InsufficientBalance();
         }
         if (_amount <= 3) {
