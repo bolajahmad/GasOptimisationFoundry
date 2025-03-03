@@ -8,6 +8,7 @@ error NameTooLong();
 error InvalidID();
 error InsufficientBalance();
 error UnauthorizedCaller();
+error MustBeOwnerOrAdmin();
 error InvalidWhitelistTier();
 error NotWhitelisted();
 error ContractHacked();
@@ -65,37 +66,25 @@ contract GasContract {
     event AddedToWhitelist(address userAddress, uint256 tier);
 
     modifier onlyAdminOrOwner() {
-        address senderOfTx = msg.sender;
-        if (checkForAdmin(senderOfTx)) {
-            require(
-                checkForAdmin(senderOfTx),
-                "Gas Contract Only Admin Check-  Caller not admin"
-            );
-            _;
-        } else if (senderOfTx == contractOwner) {
+        if (!checkForAdmin(msg.sender) && msg.sender != contractOwner) {
+            revert MustBeOwnerOrAdmin();
             _;
         } else {
-            revert(
-                "Error in Gas contract - onlyAdminOrOwner modifier : revert happened because the originator of the transaction was not the admin, and furthermore he wasn't the owner of the contract, so he cannot run this function"
-            );
+            _;
         }
     }
 
     modifier checkIfWhiteListed(address sender) {
         address senderOfTx = msg.sender;
-        require(
-            senderOfTx == sender,
-            "Gas Contract CheckIfWhiteListed modifier : revert happened because the originator of the transaction was not the sender"
-        );
-        uint256 usersTier = whitelist[senderOfTx];
-        require(
-            usersTier > 0,
-            "Gas Contract CheckIfWhiteListed modifier : revert happened because the user is not whitelisted"
-        );
-        require(
-            usersTier < 4,
-            "Gas Contract CheckIfWhiteListed modifier : revert happened because the user's tier is incorrect, it cannot be over 4 as the only tier we have are: 1, 2, 3; therfore 4 is an invalid tier for the whitlist of this contract. make sure whitlist tiers were set correctly"
-        );
+        if (msg.sender != sender) {
+            revert NotWhitelisted();
+            _;
+        }
+        uint256 usersTier = whitelist[msg.sender];
+        if (usersTier < 1 || usersTier > 4) {
+            revert NotWhitelisted();
+            _;
+        }
         _;
     }
 
