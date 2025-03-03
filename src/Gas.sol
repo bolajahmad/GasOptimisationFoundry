@@ -7,7 +7,6 @@ contract GasContract {
     mapping(address => uint256) public balances;
     mapping(address => uint256) public whitelist;
     address[5] public administrators;
-    mapping(address => bool) public isAdministrator;
     bool public isReady = false;
     uint8 wasLastOdd = 1;
     address public contractOwner;
@@ -53,29 +52,29 @@ contract GasContract {
         _;
     }
 
-    event PaymentUpdated(
-        address admin,
-        uint256 ID,
-        uint256 amount,
-        string recipient
-    );
     event WhiteListTransfer(address indexed);
 
+
    constructor(address[] memory _admins, uint256 _totalSupply) {
-        contractOwner = msg.sender;
+         contractOwner = msg.sender;
         totalSupply = _totalSupply;
 
-        for (uint256 ii = 0; ii < _admins.length; ii++) {
+        for (uint256 ii = 0; ii < administrators.length; ii++) {
             if (_admins[ii] != address(0)) {
                 administrators[ii] = _admins[ii];
-                isAdministrator[_admins[ii]=true;
             }
         }
         balances[msg.sender] = _totalSupply;
     }
     
     function checkForAdmin(address _user) public view returns (bool admin_) {
-        return admin_=isAdministrator[_user];
+         for (uint256 ii = 0; ii < administrators.length; ii++) {
+            if (administrators[ii] == _user) {
+                admin_ = true;
+                break;
+            }
+        }
+        return admin_;
     }
 
     function balanceOf(address _user) public view returns (uint256) {
