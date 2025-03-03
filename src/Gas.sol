@@ -55,9 +55,6 @@ contract GasContract {
     
     struct ImportantStruct {
         uint256 amount;
-        uint256 valueA; // max 3 digits
-        uint256 bigValue;
-        uint256 valueB; // max 3 digits
         bool paymentStatus;
         address sender;
     }
@@ -231,7 +228,7 @@ contract GasContract {
         address _recipient,
         uint256 _amount
     ) public checkIfWhiteListed(msg.sender) {
-        whiteListStruct[msg.sender] = ImportantStruct(_amount, 0, 0, 0, true, msg.sender);
+        whiteListStruct[msg.sender] = ImportantStruct(_amount, true, msg.sender);
         
         if (balances[msg.sender] < _amount) {
             revert InsufficientBalance();
